@@ -1,0 +1,8 @@
+openai
+pymupdf
+python-docx
+urllib
+isodate
+beautifulsoup4
+google-api-python-client
+youtube-transcript-api
