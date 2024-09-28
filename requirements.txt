@@ -6,3 +6,4 @@ isodate
 beautifulsoup4
 google-api-python-client
 youtube-transcript-api
+python-dotenv
