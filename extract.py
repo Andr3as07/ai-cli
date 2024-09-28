@@ -2,6 +2,7 @@ import re
 import os
 import sys
 import docx
+import dotenv
 import isodate
 import pymupdf
 import urllib.request
@@ -151,6 +152,8 @@ def extract(path):
         return None
 
 def main():
+    dotenv.load_dotenv(os.path.dirname(os.path.realpath(__file__)) + "/.env")
+
     if len(sys.argv) != 2:
         sys.stderr.write(f"Usage: {sys.argv[0]} <path>\n")
         exit(1)
