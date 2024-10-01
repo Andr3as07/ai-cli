@@ -102,11 +102,10 @@ def main():
     pattern = None
     temperature = 0.7
     model = None
-    is_stream = False
+    is_stream = sys.stdout.isatty()
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-l", "--list-patterns", action='store_true', help="List available patterns")
-    parser.add_argument("-s", "--stream", action='store_true', help="Stream output instead of waiting for completion")
     parser.add_argument("-t", "--temperature", type=float, help="The temperature to use")
     parser.add_argument("-m", "--model", type=str, help="The model to use")
     parser.add_argument("PATTERN", type=str, help="The pattern to use", nargs='?')
@@ -119,9 +118,6 @@ def main():
 
     if args.PATTERN is not None:
         pattern = args.PATTERN
-
-    if args.stream:
-        is_stream = args.stream
 
     if args.temperature is not None:
         temperature = args.temperature
