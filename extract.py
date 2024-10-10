@@ -76,7 +76,8 @@ def extract_html(html):
     return text
 
 def from_http(address):
-    page = urllib.request.urlopen(address)
+    req = urllib.request.Request(address, headers={'User-Agent': 'AI-CLI Client/1.0.0'})
+    page = urllib.request.urlopen(req)
     if page.getcode() != 200:
         sys.stderr.write(f"HTTP error {page.getcode()}\n")
         return None
