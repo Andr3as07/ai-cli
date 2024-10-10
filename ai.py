@@ -148,6 +148,8 @@ def perform_pattern(pattern: str, is_stream: bool, temperature: float = 0.7, mod
     perform_request(system_input, user_input, is_stream, temperature, model)
 
 def main():
+    global history
+
     dotenv.load_dotenv(os.path.dirname(os.path.realpath(__file__)) + "/.env")
 
     pattern = None
@@ -191,7 +193,7 @@ def main():
     if args.chat is not None:
         is_chat = args.chat
 
-    if pattern is None and system_input == "":
+    if pattern is None and system_input == "" and not is_chat:
         parser.print_help()
         exit(2)
 
@@ -200,9 +202,24 @@ def main():
             perform_pattern(pattern, is_stream, temperature, model, user_input)
         elif system_input != "":
             perform_request(system_input, user_input, is_stream, temperature, model)
+        elif is_chat:
+            pass # Nothing to do
         else:
             parser.print_help()
             exit(2)
+
+        if history is None:
+            history = []
+            
+            if system_input != "":
+                history.append({"role": "system", "content": system_input})
+            
+            if user_input != "":
+                history.append({"role": "user", "content": user_input})
+            if not sys.stdin.isatty():
+                data = sys.stdin.read()
+                if data != "":
+                    history.append({"role": "user", "content": data})
 
         if is_chat:
             switch_input()
