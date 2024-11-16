@@ -8,7 +8,6 @@ import dotenv
 import isodate
 import pymupdf
 import urllib.request
-import win32com.client
 from bs4 import BeautifulSoup
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -41,6 +40,7 @@ def from_pdf(filename):
 def from_doc(filename):
     if not file_exists(filename):
         return None
+    import win32com.client
     word = win32com.client.Dispatch("Word.Application")
     word.visible = False
     wb = word.Documents.Open(os.path.abspath(filename))
