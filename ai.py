@@ -1,5 +1,3 @@
-#! /usr/bin/python
-
 import sys
 from typing import Any, Tuple
 from openai import AuthenticationError, OpenAI, RateLimitError
