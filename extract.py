@@ -12,6 +12,7 @@ from bs4 import BeautifulSoup
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from youtube_transcript_api import YouTubeTranscriptApi
+from ai import get_client
 
 def get_video_id(url):
     # Extract video ID from URL
@@ -116,7 +117,6 @@ def from_youtube(path):
         try:
             transcript_list = YouTubeTranscriptApi.get_transcript(video_id, languages=["en", "de"])
             transcript_text = " ".join([item["text"] for item in transcript_list])
-            transcript_text = transcript_text.replace("\n", " ")
         except Exception as e:
             sys.stderr.write(f"Failed to get transcript: {e}\n")
             return None
@@ -128,6 +128,33 @@ def from_youtube(path):
     except HttpError as e:
         sys.stderr.write(f"Failed to initialize YouTube API: {e}\n")
         return None
+
+def from_audio(path):
+    client, error = get_client()
+    if error:
+        sys.stderr.write(f"Failed to create OpenAI client: {error}\n")
+        return None
+
+    audio_file = None
+    try:
+        audio_file = open(path, 'rb')
+    except:
+        sys.stderr.write(f"Failed to read audio file: {path}\n")
+        return None
+    
+    model = os.getenv("AI_TRANSCRIPTION_MODEL", "whisper-1")
+    
+    try:
+        transcript = client.audio.transcriptions.create(
+            model=model,
+            file=audio_file
+        )
+        return transcript.text
+    except Exception as e:
+        sys.stderr.write(f"Failed to transcribe audio: {e}\n")
+        return None
+
+    return None
 
 def extract(path):
     try:
@@ -147,6 +174,8 @@ def extract(path):
             return from_docx(path)
         elif ext in ['.doc']:
             return from_doc(path)
+        elif ext in ['.flac', '.m4a', '.mp3', '.mp4', '.mpeg', '.mpga', '.oga', '.ogg', '.wav', '.webm']:
+            return from_audio(path)
         else:
             sys.stderr.write(f"Unsupported file type '{path}'\n")
             return None
