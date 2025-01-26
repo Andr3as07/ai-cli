@@ -3,8 +3,77 @@
 import argparse
 import os
 import sys
+import time
+import json
 
 import ai
+from enum import Enum, auto
+
+enable_color = False
+output_buffer = []
+
+
+class OutputType(Enum):
+    User = auto()
+    Assistant = auto()
+    System = auto()
+    Info = auto()
+    Error = auto()
+
+
+def get_cache_dir() -> str:
+    # TODO: Handle windows systems
+    if os.getenv('XDG_CACHE_HOME') is not None:
+        return os.getenv('XDG_CACHE_HOME') + "/ai-cli"
+    elif os.getenv('HOME') is not None:
+        return os.getenv('HOME') + "/.cache/ai-cli"
+    return None
+
+
+def save_session(filename: str):
+    dir = get_cache_dir()
+    if dir is None:
+        return
+
+    os.makedirs(dir, exist_ok=True)
+
+    with open(dir + "/" + filename, 'w') as f:
+        json.dump(output_buffer, f)
+
+
+def append_to_session(type: OutputType, content: str):
+    global output_buffer
+
+    if len(content) == 0:
+        return
+
+    if len(output_buffer) > 0 and output_buffer[-1]['type'] == type.name:
+        output_buffer[-1]['content'] += content
+    else:
+        output_buffer.append({
+            'type': type.name,
+            'content': content
+        })
+
+
+def output(type: OutputType, content, *, end="\n", flush: bool = False):
+    map = {
+        OutputType.User:      (sys.stdout, True,  True,  ""),
+        OutputType.Assistant: (sys.stdout, True,  True,  "\033[36m"),
+        OutputType.System:    (sys.stdout, False, True,  "\033[32m"),
+        OutputType.Info:      (sys.stdout, True,  False, ""),
+        OutputType.Error:     (sys.stderr, True,  False, "\033[31m"),
+    }
+
+    (file, write_out, append, color) = map[type]
+
+    if append:
+        append_to_session(type, str(content))
+
+    if write_out:
+        if enable_color:
+            content = color + str(content) + "\033[0m"
+        print(content, file=file, end=end, flush=flush)
 
 
 def switch_input():
@@ -24,28 +93,28 @@ def get_input(prompt: str = "") -> str:
 
 
 def print_completion(completion, is_stream: bool):
-    output = ""
+    result = ""
     if is_stream:
         for chunk in completion:
             if chunk.choices[0].delta.content:
                 data = chunk.choices[0].delta.content
-                print(data, end="", flush=True)
-                output += data
+                output(OutputType.Assistant, data, end="", flush=True)
+                result += data
     else:
-        output = completion.choices[0].message.content
-        print(output)
+        result = completion.choices[0].message.content
+        output(OutputType.Assistant, result)
 
-    return output
+    return result
 
 
 def list_patterns():
     patterns, error = ai.list_patterns()
     if error is not None:
-        print(error, file=sys.stderr)
+        output(OutputType.Error, error)
         exit(1)
         return
     for pattern in patterns:
-        print(pattern)
+        output(OutputType.Info, pattern)
 
 
 def perform(pattern: str,
@@ -58,17 +127,20 @@ def perform(pattern: str,
     history = []
 
     if system_input != "":
+        append_to_session(OutputType.System, system_input)
+        if user_input is not None:
+            append_to_session(OutputType.User, user_input)
         ai.build_history(history, system_input, user_input)
 
         completion, error = ai.perform_request(history, is_stream,
                                                temperature, model)
 
         if error is not None:
-            print(error, file=sys.stderr)
+            output(OutputType.Error, error)
             exit(1)
 
-        output = print_completion(completion, is_stream)
-        history.append({"role": "assistant", "content": output})
+        result = print_completion(completion, is_stream)
+        history.append({"role": "assistant", "content": result})
 
     if is_chat:
         switch_input()
@@ -76,15 +148,16 @@ def perform(pattern: str,
             stdin = input("\n> ")
 
             history.append({"role": "user", "content": stdin})
+            append_to_session(OutputType.User, stdin)
 
             completion, error = ai.perform_request(history, is_stream,
                                                    temperature, model)
             if error is not None:
-                print(error, file=sys.stderr)
+                output(OutputType.Error, error)
                 exit(1)
 
-            output = print_completion(completion, is_stream)
-            history.append({"role": "assistant", "content": output})
+            result = print_completion(completion, is_stream)
+            history.append({"role": "assistant", "content": result})
 
 
 def load_environment():
@@ -113,12 +186,16 @@ def generate_parser():
 
 
 def get_optional_argument(args: argparse.Namespace, name, defval=None):
-    if name not in args:
+    value = args.__getattribute__(name)
+    if value is None:
         return defval
-    return args.__getattribute__(name)
+    return value
 
 
 def main():
+    global enable_color
+
+    timestamp = time.gmtime()
     pattern = None
     temperature = 0.7
     model = None
@@ -126,6 +203,10 @@ def main():
     system_input = ""
     user_input = ""
     is_chat = False
+
+    should_save_session = is_stream or is_chat
+
+    enable_color = is_stream
 
     parser = generate_parser()
     args = parser.parse_args()
@@ -135,23 +216,13 @@ def main():
         exit(0)
 
     pattern = get_optional_argument(args, 'PATTERN')
+    temperature = get_optional_argument(args, 'temperature', temperature)
+    model = get_optional_argument(args, 'model')
+    system_input = get_optional_argument(args, 'prompt')
+    user_input = get_optional_argument(args, 'user', "")
+    is_chat = get_optional_argument(args, 'chat', is_chat)
 
-    if args.temperature is not None:
-        temperature = args.temperature
-
-    if args.model is not None:
-        model = args.model
-
-    if args.prompt is not None:
-        system_input = args.prompt
-
-    if args.user is not None:
-        user_input = args.user
-
-    if args.chat is not None:
-        is_chat = args.chat
-
-    if pattern is None and system_input == "" and not is_chat:
+    if pattern is None and system_input is None and not is_chat:
         parser.print_help()
         exit(2)
 
@@ -176,9 +247,12 @@ def main():
             perform(pattern, user_input, system_input,
                     is_chat, is_stream, model, temperature)
     except KeyboardInterrupt:
-        print("User interrupted execution", file=sys.stderr)
-        exit(3)
+        output(OutputType.Error, "User interrupted execution")
 
+    if should_save_session:
+        now = time.strftime("%Y%m%d%H%M%S", timestamp)
+        filename = f"{now}_{pattern if pattern else 'nopattern'}.json"
+        save_session(filename)
 
 if __name__ == "__main__":
     main()
