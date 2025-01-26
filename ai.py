@@ -84,7 +84,7 @@ def build_history(
         history.append({"role": "user", "content": user_input + stdin})
 
 
-def load_pattern(pattern: str, user_input: str = ""):
+def load_pattern(pattern: str, system_input: str = "", user_input: str = ""):
     pattern_path = find_pattern_path(pattern)
     if not os.path.exists(pattern_path):
         return None, None, f"Pattern '{pattern}' not found"

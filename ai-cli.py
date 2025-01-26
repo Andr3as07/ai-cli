@@ -117,7 +117,7 @@ def list_patterns():
         output(OutputType.Info, pattern)
 
 
-def perform(pattern: str,
+def perform(patterns: list[str],
             user_input: str,
             system_input: str,
             is_chat: bool,
@@ -125,6 +125,17 @@ def perform(pattern: str,
             model: str,
             temperature: float):
     history = []
+
+    # FIXME: We assume that we have at least one pattern.
+    # The System sould still work if we use a user suppied system prompt.
+
+    output(OutputType.Info, "Applying pattern: " + patterns[0])
+    system_input, user_input, error = ai.load_pattern(patterns[0],
+                                                    system_input, user_input)
+
+    if error is not None:
+        output(OutputType.Error, error)
+        exit(1)
 
     if system_input != "":
         append_to_session(OutputType.System, system_input)
@@ -142,7 +153,33 @@ def perform(pattern: str,
         result = print_completion(completion, is_stream)
         history.append({"role": "assistant", "content": result})
 
+        for pattern in patterns[1:]:
+            output(OutputType.Info, "\nApplying pattern: " + pattern)
+            system_input, user_input, error = ai.load_pattern(pattern, user_input=result)
+            if error is not None:
+                output(OutputType.Error, error)
+                exit(1)
+            if system_input == "":
+                output(OutputType.Error,
+                       "System input required for subsequent patterns")
+                exit(1)
+            append_to_session(OutputType.System, system_input)
+            if user_input is not None:
+                append_to_session(OutputType.User, user_input)
+            ai.build_history(history, system_input, user_input)
+
+            completion, error = ai.perform_request(history, is_stream,
+                                                   temperature, model)
+
+            if error is not None:
+                output(OutputType.Error, error)
+                exit(1)
+
+            result = print_completion(completion, is_stream)
+            history.append({"role": "assistant", "content": result})
+
     if is_chat:
+        output(OutputType.Info, "\nStarting Chat session")
         switch_input()
         while True:
             stdin = input("\n> ")
@@ -180,7 +217,7 @@ def generate_parser():
     parser.add_argument("-c", "--chat",
                         action='store_true', help="Enter chat mode")
     parser.add_argument("PATTERN",
-                        type=str, help="The pattern to use", nargs='?')
+                        type=str, help="The pattern to use", nargs='*')
 
     return parser
 
@@ -215,14 +252,14 @@ def main():
         list_patterns()
         exit(0)
 
-    pattern = get_optional_argument(args, 'PATTERN')
+    patterns = get_optional_argument(args, 'PATTERN')
     temperature = get_optional_argument(args, 'temperature', temperature)
     model = get_optional_argument(args, 'model')
     system_input = get_optional_argument(args, 'prompt')
     user_input = get_optional_argument(args, 'user', "")
     is_chat = get_optional_argument(args, 'chat', is_chat)
 
-    if pattern is None and system_input is None and not is_chat:
+    if len(patterns) == 0 and system_input is None and not is_chat:
         parser.print_help()
         exit(2)
 
@@ -232,26 +269,20 @@ def main():
     load_environment()
 
     try:
-        if pattern is not None:
-            # FIXME: This overrides the user defined system prompt
-            system_input, user_input, error = ai.load_pattern(pattern,
-                                                              user_input)
-            if error is not None:
-                print(error, file=sys.stderr)
-                exit(1)
-            elif system_input != "" or is_chat:
-                pass  # Nothing to do
-            else:
-                parser.print_help()
-                exit(2)
-            perform(pattern, user_input, system_input,
+        if patterns is not None:
+            perform(patterns, user_input, system_input,
                     is_chat, is_stream, model, temperature)
     except KeyboardInterrupt:
         output(OutputType.Error, "User interrupted execution")
 
     if should_save_session:
         now = time.strftime("%Y%m%d%H%M%S", timestamp)
-        filename = f"{now}_{pattern if pattern else 'nopattern'}.json"
+        pattern_text = 'nopttern'
+        if len(patterns) > 1:
+            pattern_text = 'multiplepatterns'
+        else:
+            pattern_text = patterns[0]
+        filename = f"{now}_{pattern_text}.json"
         save_session(filename)
 
 if __name__ == "__main__":
