@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
+import argparse
 import os
 import sys
+
 import ai
 
 
@@ -46,17 +48,51 @@ def list_patterns():
         print(pattern)
 
 
-def main():
-    import argparse
+def perform(pattern: str,
+            user_input: str,
+            system_input: str,
+            is_chat: bool,
+            is_stream: bool,
+            model: str,
+            temperature: float):
+    history = []
 
-    pattern = None
-    temperature = 0.7
-    model = None
-    is_stream = sys.stdout.isatty()
-    system_input = ""
-    user_input = ""
-    is_chat = False
+    if system_input != "":
+        ai.build_history(history, system_input, user_input)
 
+        completion, error = ai.perform_request(history, is_stream,
+                                               temperature, model)
+
+        if error is not None:
+            print(error, file=sys.stderr)
+            exit(1)
+
+        output = print_completion(completion, is_stream)
+        history.append({"role": "assistant", "content": output})
+
+    if is_chat:
+        switch_input()
+        while True:
+            stdin = input("\n> ")
+
+            history.append({"role": "user", "content": stdin})
+
+            completion, error = ai.perform_request(history, is_stream,
+                                                   temperature, model)
+            if error is not None:
+                print(error, file=sys.stderr)
+                exit(1)
+
+            output = print_completion(completion, is_stream)
+            history.append({"role": "assistant", "content": output})
+
+
+def load_environment():
+    import dotenv
+    dotenv.load_dotenv(os.path.dirname(os.path.realpath(__file__)) + "/.env")
+
+
+def generate_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-l", "--list-patterns",
                         action='store_true', help="List available patterns")
@@ -73,14 +109,32 @@ def main():
     parser.add_argument("PATTERN",
                         type=str, help="The pattern to use", nargs='?')
 
+    return parser
+
+
+def get_optional_argument(args: argparse.Namespace, name, defval=None):
+    if name not in args:
+        return defval
+    return args.__getattribute__(name)
+
+
+def main():
+    pattern = None
+    temperature = 0.7
+    model = None
+    is_stream = sys.stdout.isatty()
+    system_input = ""
+    user_input = ""
+    is_chat = False
+
+    parser = generate_parser()
     args = parser.parse_args()
 
     if args.list_patterns:
         list_patterns()
         exit(0)
 
-    if args.PATTERN is not None:
-        pattern = args.PATTERN
+    pattern = get_optional_argument(args, 'PATTERN')
 
     if args.temperature is not None:
         temperature = args.temperature
@@ -104,51 +158,23 @@ def main():
     if not sys.stdin.isatty():
         user_input += sys.stdin.read()
 
-    import dotenv
-    dotenv.load_dotenv(os.path.dirname(os.path.realpath(__file__)) + "/.env")
+    load_environment()
 
     try:
-        history = []
         if pattern is not None:
             # FIXME: This overrides the user defined system prompt
-            system_input, user_input, error = ai.load_pattern(pattern, user_input)
+            system_input, user_input, error = ai.load_pattern(pattern,
+                                                              user_input)
             if error is not None:
                 print(error, file=sys.stderr)
                 exit(1)
-        elif system_input != "" or is_chat:
-            pass  # Nothing to do
-        else:
-            parser.print_help()
-            exit(2)
-
-        if system_input != "":
-            ai.build_history(history, system_input, user_input)
-
-            completion, error = ai.perform_request(history, is_stream,
-                                                temperature, model)
-
-            if error is not None:
-                print(error, file=sys.stderr)
-                exit(1)
-
-            output = print_completion(completion, is_stream)
-            history.append({"role": "assistant", "content": output})
-
-        if is_chat:
-            switch_input()
-            while True:
-                stdin = input("\n> ")
-
-                history.append({"role": "user", "content": stdin})
-
-                completion, error = ai.perform_request(history, is_stream,
-                                                    temperature, model)
-                if error is not None:
-                    print(error, file=sys.stderr)
-                    exit(1)
-
-                output = print_completion(completion, is_stream)
-                history.append({"role": "assistant", "content": output})
+            elif system_input != "" or is_chat:
+                pass  # Nothing to do
+            else:
+                parser.print_help()
+                exit(2)
+            perform(pattern, user_input, system_input,
+                    is_chat, is_stream, model, temperature)
     except KeyboardInterrupt:
         print("User interrupted execution", file=sys.stderr)
         exit(3)

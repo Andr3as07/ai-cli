@@ -85,7 +85,7 @@ def build_history(
 
 
 def load_pattern(pattern: str, user_input: str = ""):
-    pattern_path = find_pattern_path(pattern) 
+    pattern_path = find_pattern_path(pattern)
     if not os.path.exists(pattern_path):
         return None, None, f"Pattern '{pattern}' not found"
 
