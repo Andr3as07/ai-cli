@@ -1,11 +1,13 @@
-from typing import Any, Tuple
 import os
+from typing import Any
+from typing import Tuple
 
 _client = None
 
 
 def get_client() -> Tuple[Any, str]:
     from openai import OpenAI
+
     global _client
 
     try:
@@ -26,10 +28,10 @@ def get_user_patterns_path() -> str:
 
     # TODO: Handle windows systems
 
-    if os.getenv('XDG_CONFIG_HOME') is not None:
-        user_patterns_path = os.getenv('XDG_CONFIG_HOME') + "/ai-cli/patterns"
-    elif os.getenv('HOME'):
-        user_patterns_path = os.getenv('HOME') + "/.config/ai-cli/patterns"
+    if os.getenv("XDG_CONFIG_HOME") is not None:
+        user_patterns_path = os.getenv("XDG_CONFIG_HOME") + "/ai-cli/patterns"
+    elif os.getenv("HOME"):
+        user_patterns_path = os.getenv("HOME") + "/.config/ai-cli/patterns"
 
     return user_patterns_path
 
@@ -75,10 +77,11 @@ def list_patterns():
 
 
 def build_history(
-        history: list,
-        system_input: str,
-        user_input: str = "",
-        stdin: str = ""):
+    history: list,
+    system_input: str,
+    user_input: str = "",
+    stdin: str = "",
+):
     history.append({"role": "system", "content": system_input})
     if user_input + stdin != "":
         history.append({"role": "user", "content": user_input + stdin})
@@ -101,11 +104,13 @@ def load_pattern(pattern: str, system_input: str = "", user_input: str = ""):
 
 
 def perform_request(
-        history: list,
-        is_stream: bool,
-        temperature: float = 0.7,
-        model: str = None):
+    history: list,
+    is_stream: bool,
+    temperature: float = 0.7,
+    model: str = None,
+):
     from openai import AuthenticationError, RateLimitError
+
     client, error = get_client()
     if error:
         return None, error
