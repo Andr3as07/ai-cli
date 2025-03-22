@@ -13,7 +13,7 @@ line breaks in weird places, etc.
 
 ## OUTPUT INSTRUCTIONS
 
-- Output the full, properly-formatted text.
+- Output the full, properly formatted text.
 - Do not output warnings or notes—just the requested sections.
 
 ## INPUT

@@ -41,7 +41,7 @@ Does it seem complete?
 If you make an effort, you can read your writing as if you were a complete
 stranger, and when you do the news is usually bad.
 It takes me many cycles before I can get an essay past the stranger.
-But the stranger is rational, so you always can, if you ask him what he needs.
+The stranger is rational, so you always can, if you ask him what he needs.
 If he's not satisfied because you failed to mention x or didn't qualify some
 sentence sufficiently, then you mention x or add more qualifications.
 Happy now?
@@ -53,7 +53,7 @@ I think it will accord with the experience of anyone who has tried to write
 about anything non-trivial.
 There may exist people whose thoughts are so perfectly formed that they just
 flow straight into words.
-But I've never known anyone who could do this, and if I met someone who said
+I've never known anyone who could do this, and if I met someone who said
 they could, it would seem evidence of their limitations rather than their
 ability.
 Indeed, this is a trope in movies: the guy who claims to have a plan for doing
@@ -61,19 +61,19 @@ some difficult thing, and who when questioned further, taps his head and says
 "It's all up here."
 Everyone watching the movie knows what that means.
 At best the plan is vague and incomplete.
-Very likely there's some undiscovered flaw that invalidates it completely.
+Likely there's some undiscovered flaw that invalidates it completely.
 At best it's a plan for a plan.
 
 In precisely defined domains it's possible to form complete ideas in your head.
 People can play chess in their heads, for example.
 And mathematicians can do some amount of math in their heads, though they don't
 seem to feel sure of a proof over a certain length till they write it down.
-But this only seems possible with ideas you can express in a formal language.
+This only seems possible with ideas you can express in a formal language.
 Arguably what such people are doing is putting ideas into words in their heads.
 I can to some extent write essays in my head.
 I'll sometimes think of a paragraph while walking or lying in bed that survives
 nearly unchanged in the final version.
-But really I'm writing when I do this.
+Really I'm writing when I do this.
 I'm doing the mental part of writing; my fingers just aren't moving as I do it.
 
 You can know a great deal about something without writing about it.
@@ -97,20 +97,20 @@ ways, you'll still learn new things from writing about them.
 
 Putting ideas into words doesn't have to mean writing, of course.
 You can also do it the old way, by talking.
-But in my experience, writing is the stricter test.
+In my experience, writing is the stricter test.
 You have to commit to a single, optimal sequence of words.
 Less can go unsaid when you don't have tone of voice to carry meaning.
-And you can focus in a way that would seem excessive in conversation.
+And you can focus on writing in a way that would seem excessive in conversation.
 I'll often spend 2 weeks on an essay and reread drafts 50 times.
 If you did that in conversation it would seem evidence of some kind of mental
 disorder.
 If you're lazy, of course, writing and talking are equally useless.
-But if you want to push yourself to get things right, writing is the steeper
+If you want to push yourself to get things right, writing is the steeper
 hill.
 
 The reason I've spent so long establishing this rather obvious point is that it
 leads to another that many people will find shocking.
-If writing down your ideas always makes them more precise and more complete,
+If writing down your ideas always makes them precise and complete,
 then no one who hasn't written about a topic has fully formed ideas about it.
 And someone who never writes has no fully formed ideas about anything
 non-trivial.

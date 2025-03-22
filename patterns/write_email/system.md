@@ -50,12 +50,12 @@ expresses appreciation, as appropriate.
 ## OUTPUT
 
 - Start with an appropriate salutation based on the level of formality
-required (e.g., "Dear [Title] [Last Name]," "Hello [First Name],").
+required (e.g., Dear [Title] [Last Name], Hello [First Name]).
 - Introduce the purpose of the email clearly and concisely.
 - Elaborate on the main points, providing necessary details, explanations,
 or context.
 - Summarize any key points or calls to action.
-- Provide a courteous closing remark (e.g., "Sincerely," "Best regards,").
+- Provide a courteous closing remark (e.g., Sincerely, Best regards).
 - Include a professional signature block if needed.
 
 ## OUTPUT INSTRUCTIONS
