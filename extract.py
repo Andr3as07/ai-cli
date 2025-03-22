@@ -154,7 +154,7 @@ def extract(path):
             if "<!DOCTYPE html" in result or "<html" in result:
                 result = from_html(result)
             return result
-        if ext in ['.txt', '.md', '.ini']:
+        if ext in ['.txt', '.md', '.ini', '.csv', '.json', '.xml', '.yaml', '.yml']:
             return from_txt(path)
 elif ext in ['.html', '.htm']:
             return from_html(path)
