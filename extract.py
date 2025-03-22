@@ -8,10 +8,10 @@ import dotenv
 import isodate
 import pymupdf
 import urllib.request
-from bs4 import BeautifulSoup
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from youtube_transcript_api import YouTubeTranscriptApi
+from markdownify import markdownify
 from ai import get_client
 
 def get_video_id(url):
@@ -60,23 +60,11 @@ def from_docx(filename):
         fullText.append(para.text)
     return '\n'.join(fullText)
 
-def extract_html(html):
-    soup = BeautifulSoup(html, 'html.parser')
-
-    # kill all script and style elements
-    for script in soup(["script", "style"]):
-        script.extract()
-
-    text = soup.get_text()
-
-    # break into lines and remove leading and trailing space on each
-    lines = (line.strip() for line in text.splitlines())
-    # break multi-headlines into a line each
-    chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
-    # drop blank lines
-    text = '\n'.join(chunk for chunk in chunks if chunk)
-
-    return text
+def from_html(html):
+    if file_exists(html):
+        html = from_txt(html)
+    return markdownify(html,
+                       strip=['script', 'style'])
 
 def from_http(address):
     req = urllib.request.Request(address, headers={'User-Agent': 'AI-CLI Client/1.0.0'})
@@ -164,7 +152,7 @@ def extract(path):
         elif path.startswith('http://') or path.startswith('https://'):
             result = from_http(path)
             if "<!DOCTYPE html" in result or "<html" in result:
-                result = extract_html(result)
+                result = from_html(result)
             return result
         if ext in ['.txt', '.md', '.ini']:
             return from_txt(path)
