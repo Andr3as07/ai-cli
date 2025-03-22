@@ -156,6 +156,8 @@ def extract(path):
             return result
         if ext in ['.txt', '.md', '.ini']:
             return from_txt(path)
+elif ext in ['.html', '.htm']:
+            return from_html(path)
         elif ext in ['.pdf']:
             return from_pdf(path)
         elif ext in ['.docx']:
