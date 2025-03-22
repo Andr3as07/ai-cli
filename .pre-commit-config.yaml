@@ -18,9 +18,6 @@ repos:
     rev: v0.9.27
     hooks:
       - id: pymarkdown
-        args:
-          - scan
-          - "**.md"
   - repo: https://github.com/asottile/reorder-python-imports
     rev: v3.14.0
     hooks:
