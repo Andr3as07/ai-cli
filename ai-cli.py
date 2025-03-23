@@ -8,6 +8,7 @@ from enum import auto
 from enum import Enum
 
 import ai
+import models as models_loader
 
 enable_color = False
 output_buffer = []
@@ -145,17 +146,28 @@ def perform(
         output(OutputType.Error, error)
         exit(1)
 
+    completion_model, provider, error = models_loader.get_completion_model_and_provider(
+        model,
+    )
+
+    if error is not None:
+        output(OutputType.Error, error)
+        exit(1)
+
+    model_name = completion_model.model_name
+    driver, error = provider.get_driver()
+
     if system_input != "":
         append_to_session(OutputType.System, system_input)
         if user_input is not None:
             append_to_session(OutputType.User, user_input)
         ai.build_history(history, system_input, user_input)
 
-        completion, error = ai.perform_request(
+        completion, error = driver.perform_request(
             history,
             is_stream,
             temperature,
-            model,
+            model_name,
         )
 
         if error is not None:
@@ -185,11 +197,11 @@ def perform(
                 append_to_session(OutputType.User, user_input)
             ai.build_history(history, system_input, user_input)
 
-            completion, error = ai.perform_request(
+            completion, error = driver.perform_request(
                 history,
                 is_stream,
                 temperature,
-                model,
+                model_name,
             )
 
             if error is not None:
@@ -208,12 +220,13 @@ def perform(
             history.append({"role": "user", "content": stdin})
             append_to_session(OutputType.User, stdin)
 
-            completion, error = ai.perform_request(
+            completion, error = driver.perform_request(
                 history,
                 is_stream,
                 temperature,
-                model,
+                model_name,
             )
+
             if error is not None:
                 output(OutputType.Error, error)
                 exit(1)
@@ -226,6 +239,33 @@ def load_environment():
     import dotenv
 
     dotenv.load_dotenv(os.path.dirname(os.path.realpath(__file__)) + "/.env")
+
+
+def load_models():
+    global_models_file = (
+        os.path.dirname(
+            os.path.realpath(__file__),
+        )
+        + "/models.json"
+    )
+
+    if os.path.isfile(global_models_file):
+        models_loader.load_models_file(global_models_file)
+
+    user_config_path = None
+
+    # TODO: Handle windows systems
+
+    if os.getenv("XDG_CONFIG_HOME") is not None:
+        user_config_path = os.getenv("XDG_CONFIG_HOME") + "/ai-cli"
+    elif os.getenv("HOME"):
+        user_config_path = os.getenv("HOME") + "/.config/ai-cli"
+
+    if user_config_path is not None:
+        user_models_file = user_config_path + "/models.json"
+
+        if os.path.isfile(user_models_file):
+            models_loader.load_models_file(user_models_file)
 
 
 def generate_parser():
@@ -287,7 +327,6 @@ def main():
     global enable_color
 
     timestamp = time.gmtime()
-    pattern = None
     temperature = 0.7
     model = None
     is_stream = sys.stdout.isatty()
@@ -308,7 +347,11 @@ def main():
 
     patterns = get_optional_argument(args, "PATTERN")
     temperature = get_optional_argument(args, "temperature", temperature)
-    model = get_optional_argument(args, "model")
+    model = get_optional_argument(
+        args,
+        "model",
+        os.getenv("DEFAULT_AI_MODEL") or "chatgpt-4",
+    )
     system_input = get_optional_argument(args, "prompt")
     user_input = get_optional_argument(args, "user", "")
     is_chat = get_optional_argument(args, "chat", is_chat)
@@ -321,6 +364,7 @@ def main():
         user_input += sys.stdin.read()
 
     load_environment()
+    load_models()
 
     try:
         if patterns is not None:

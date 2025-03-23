@@ -1,0 +1,53 @@
+{
+    "providers": {
+        "openai": {
+            "driver": "openai",
+            "base_address": "https://api.openai.com/v1",
+            "token": "OPENAI_API_KEY"
+        }
+    },
+    "completion": {
+        "chatgpt-4o": {
+            "model_name": "gpt-4o",
+            "provider": "openai",
+            "inputs": ["text", "image"],
+            "outputs": ["text", "structure"],
+            "reasoning": false
+        },
+        "chatgpt-4o-mini": {
+            "model_name": "gpt-4o-mini",
+            "provider": "openai",
+            "inputs": ["text", "image"],
+            "outputs": ["text", "structure"],
+            "reasoning": false
+        },
+        "chatgpt-o1": {
+            "model_name": "o1-preview",
+            "provider": "openai",
+            "inputs": ["text", "image"],
+            "outputs": ["text", "structure"],
+            "reasoning": true
+        },
+        "chatgpt-o1-mini": {
+            "model_name": "o1-mini",
+            "provider": "openai",
+            "inputs": ["text"],
+            "outputs": ["text"],
+            "reasoning": true
+        },
+        "chatgpt-4": {
+            "model_name": "gpt-4",
+            "provider": "openai",
+            "inputs": ["text"],
+            "outputs": ["text"],
+            "reasoning": false
+        },
+        "chatgpt-4-turbo": {
+            "model_name": "gpt-4-turbo",
+            "provider": "openai",
+            "inputs": ["text"],
+            "outputs": ["text"],
+            "reasoning": false
+        }
+    }
+}
