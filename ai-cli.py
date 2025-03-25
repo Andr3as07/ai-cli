@@ -63,8 +63,8 @@ def output(type: OutputType, content, *, end="\n", flush: bool = False):
     map = {
         OutputType.User: (sys.stdout, True, True, ""),
         OutputType.Assistant: (sys.stdout, True, True, "\033[36m"),
-        OutputType.System: (sys.stdout, False, True, "\033[32m"),
-        OutputType.Info: (sys.stdout, True, False, ""),
+        OutputType.System: (sys.stderr, False, True, "\033[32m"),
+        OutputType.Info: (sys.stderr, True, False, ""),
         OutputType.Error: (sys.stderr, True, False, "\033[31m"),
     }
 
