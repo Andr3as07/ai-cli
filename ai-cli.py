@@ -121,6 +121,11 @@ def list_patterns():
         output(OutputType.Info, pattern)
 
 
+def list_models():
+    for model in models_loader.completion_models:
+        print(model)
+
+
 def perform(
     patterns: list[str],
     user_input: str,
@@ -277,6 +282,12 @@ def generate_parser():
         help="List available patterns",
     )
     parser.add_argument(
+        "-L",
+        "--list-models",
+        action="store_true",
+        help="List available models",
+    )
+    parser.add_argument(
         "-t",
         "--temperature",
         type=float,
@@ -341,8 +352,14 @@ def main():
     parser = generate_parser()
     args = parser.parse_args()
 
+    load_models()
+
     if args.list_patterns:
         list_patterns()
+        exit(0)
+
+    if args.list_models:
+        list_models()
         exit(0)
 
     patterns = get_optional_argument(args, "PATTERN")
@@ -364,7 +381,6 @@ def main():
         user_input += sys.stdin.read()
 
     load_environment()
-    load_models()
 
     try:
         if patterns is not None:
