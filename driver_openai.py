@@ -49,8 +49,6 @@ class OpenAIDriver:
 
             return completion, None
         except AuthenticationError as e:
-            return (None,)
-            "Failed to authenticate to server: " + e.body["message"]
+            return None, "Failed to authenticate to server: " + e.body["message"]
         except RateLimitError as e:
-            return (None,)
-            "API rate limit exceeded: " + e.body["message"]
+            return None, "API rate limit exceeded: " + e.body["message"]

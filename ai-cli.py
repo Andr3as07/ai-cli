@@ -352,6 +352,7 @@ def main():
     parser = generate_parser()
     args = parser.parse_args()
 
+    load_environment()
     load_models()
 
     if args.list_patterns:
@@ -379,8 +380,6 @@ def main():
 
     if not sys.stdin.isatty():
         user_input += sys.stdin.read()
-
-    load_environment()
 
     try:
         if patterns is not None:
