@@ -1,11 +1,12 @@
 import os
 from typing import Any
+from typing import Optional
 from typing import Tuple
 
 _client = None
 
 
-def get_client() -> Tuple[Any, str]:
+def get_client() -> Tuple[Any, Optional[str]]:
     from openai import OpenAI
 
     global _client
@@ -23,16 +24,15 @@ def get_client() -> Tuple[Any, str]:
     return _client, None
 
 
-def get_user_patterns_path() -> str:
+def get_user_patterns_path() -> Optional[str]:
     user_patterns_path = None
 
-    # TODO: Handle windows systems
-
     if os.getenv("XDG_CONFIG_HOME") is not None:
-        user_patterns_path = os.getenv("XDG_CONFIG_HOME") + "/ai-cli/patterns"
+        user_patterns_path = os.getenv("XDG_CONFIG_HOME", "") + "/ai-cli/patterns"
     elif os.getenv("HOME"):
-        user_patterns_path = os.getenv("HOME") + "/.config/ai-cli/patterns"
-
+        user_patterns_path = os.getenv("HOME", "") + "/.config/ai-cli/patterns"
+    elif os.getenv("LOCALAPPDATA"):
+        user_patterns_path = os.getenv("LOCALAPPDATA", "") + "/ai-cli/patterns"
     return user_patterns_path
 
 
@@ -47,7 +47,7 @@ def list_pattern_from_directory(path: str):
     return os.listdir(path)
 
 
-def find_pattern_path(pattern_name: str) -> str:
+def find_pattern_path(pattern_name: str) -> Optional[str]:
     user_patterns_path = get_user_patterns_path()
 
     if user_patterns_path is not None:
@@ -87,8 +87,16 @@ def build_history(
         history.append({"role": "user", "content": user_input + stdin})
 
 
-def load_pattern(pattern: str, system_input: str = "", user_input: str = ""):
+def load_pattern(
+    pattern: str,
+    system_input: Optional[str] = "",
+    user_input: Optional[str] = "",
+):
     pattern_path = find_pattern_path(pattern)
+
+    if pattern_path is None:
+        return None, None, f"Unable to locate pattern '{pattern}'"
+
     if not os.path.exists(pattern_path):
         return None, None, f"Pattern '{pattern}' not found"
 
@@ -107,7 +115,7 @@ def perform_request(
     history: list,
     is_stream: bool,
     temperature: float = 0.7,
-    model: str = None,
+    model: Optional[str] = None,
 ):
     from openai import AuthenticationError, RateLimitError
 

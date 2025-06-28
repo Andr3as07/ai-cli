@@ -6,6 +6,7 @@ import sys
 import time
 from enum import auto
 from enum import Enum
+from typing import Optional
 
 import ai
 import models as models_loader
@@ -22,12 +23,15 @@ class OutputType(Enum):
     Error = auto()
 
 
-def get_cache_dir() -> str:
-    # TODO: Handle windows systems
+def get_cache_dir() -> Optional[str]:
     if os.getenv("XDG_CACHE_HOME") is not None:
-        return os.getenv("XDG_CACHE_HOME") + "/ai-cli"
+        return os.getenv("XDG_CACHE_HOME", "") + "/ai-cli"
     elif os.getenv("HOME") is not None:
-        return os.getenv("HOME") + "/.cache/ai-cli"
+        return os.getenv("HOME", "") + "/.cache/ai-cli"
+    elif os.getenv("TMP") is not None:
+        return os.getenv("TMP", "") + "/ai-cli"
+    elif os.getenv("TEMP") is not None:
+        return os.getenv("TEMP", "") + "/ai-cli"
     return None
 
 
@@ -259,12 +263,12 @@ def load_models():
 
     user_config_path = None
 
-    # TODO: Handle windows systems
-
     if os.getenv("XDG_CONFIG_HOME") is not None:
-        user_config_path = os.getenv("XDG_CONFIG_HOME") + "/ai-cli"
+        user_config_path = os.getenv("XDG_CONFIG_HOME", "") + "/ai-cli"
     elif os.getenv("HOME"):
-        user_config_path = os.getenv("HOME") + "/.config/ai-cli"
+        user_config_path = os.getenv("HOME", "") + "/.config/ai-cli"
+    elif os.getenv("LOCALAPPDATA"):
+        user_config_path = os.getenv("LOCALAPPDATA", "") + "/ai-cli"
 
     if user_config_path is not None:
         user_models_file = user_config_path + "/models.json"
