@@ -1,4 +1,5 @@
 from typing import Any
+from typing import Optional
 from typing import Tuple
 
 from openai import NotFoundError
@@ -10,7 +11,7 @@ class OpenAIDriver:
         self.token = token
         self._client = None
 
-    def get_client(self) -> Tuple[Any, str]:
+    def get_client(self) -> Tuple[Any, Optional[str]]:
         from openai import OpenAI
 
         global _client
@@ -30,7 +31,7 @@ class OpenAIDriver:
         history: list,
         is_stream: bool,
         temperature: float = 0.7,
-        model: str = None,
+        model: Optional[str] = None,
     ):
         from openai import AuthenticationError, RateLimitError
 
