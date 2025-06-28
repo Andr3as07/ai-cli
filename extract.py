@@ -3,48 +3,49 @@ import os
 import re
 import sys
 import urllib.request
+from typing import Optional
 
 import docx
 import dotenv
 import isodate
 import pymupdf
+from bs4 import BeautifulSoup
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
-from markdownify import markdownify
+from markdownify import MarkdownConverter
 from youtube_transcript_api import YouTubeTranscriptApi
 
 from ai import get_client
 
 
-def get_video_id(url):
+def get_video_id(url) -> Optional[str]:
     # Extract video ID from URL
     pattern = r"(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})"
     match = re.search(pattern, url)
     return match.group(1) if match else None
 
 
-def file_exists(filename):
+def file_exists(filename) -> bool:
     if not os.path.isfile(filename):
-        sys.stderr.write(f"File '{filename}' not found\n")
         return False
     return True
 
 
-def from_txt(filename):
+def from_txt(filename: str) -> Optional[str]:
     if not file_exists(filename):
         return None
     with open(filename, "r") as f:
         return f.read()
 
 
-def from_pdf(filename):
+def from_pdf(filename) -> Optional[str]:
     if not file_exists(filename):
         return None
     doc = pymupdf.open(filename)
     return "\n".join([page.get_text() for page in doc])
 
 
-def from_doc(filename):
+def from_doc(filename) -> Optional[str]:
     if not file_exists(filename):
         return None
     import win32com.client
@@ -59,7 +60,7 @@ def from_doc(filename):
     return result
 
 
-def from_docx(filename):
+def from_docx(filename) -> Optional[str]:
     if not file_exists(filename):
         return None
     doc = docx.Document(filename)
@@ -69,16 +70,19 @@ def from_docx(filename):
     return "\n".join(fullText)
 
 
-def from_html(html):
-    if file_exists(html):
-        html = from_txt(html)
-    return markdownify(
-        html,
-        strip=["script", "style"],
-    )
+def from_html(file: str) -> Optional[str]:
+    if file_exists(file):
+        html = from_txt(file)
+    else:
+        html = file
+    soup = BeautifulSoup(html, "html.parser")
+    for tag in soup(["style", "script"]):
+        tag.decompose()
+
+    return MarkdownConverter().convert_soup(soup)
 
 
-def from_http(address):
+def from_http(address) -> Optional[str]:
     req = urllib.request.Request(address, headers={"User-Agent": "AI-CLI Client/1.0.0"})
     page = urllib.request.urlopen(req)
     if page.getcode() != 200:
@@ -87,7 +91,7 @@ def from_http(address):
     return page.read().decode("utf-8")
 
 
-def from_youtube(path):
+def from_youtube(path) -> Optional[str]:
     api_key = os.getenv("YOUTUBE_API_KEY")
     if not api_key:
         sys.stderr.write("YOUTUBE_API_KEY not set\n")
@@ -136,7 +140,7 @@ def from_youtube(path):
         return None
 
 
-def from_audio(path):
+def from_audio(path) -> Optional[str]:
     client, error = get_client()
     if error:
         sys.stderr.write(f"Failed to create OpenAI client: {error}\n")
@@ -161,10 +165,8 @@ def from_audio(path):
         sys.stderr.write(f"Failed to transcribe audio: {e}\n")
         return None
 
-    return None
 
-
-def extract(path):
+def extract(path) -> Optional[str]:
     try:
         ext = os.path.splitext(path)[1].lower()
         if get_video_id(path) is not None:
