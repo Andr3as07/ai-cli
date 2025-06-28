@@ -1,6 +1,8 @@
 from typing import Any
 from typing import Tuple
 
+from openai import NotFoundError
+
 
 class OpenAIDriver:
     def __init__(self, base_address, token):
@@ -52,3 +54,5 @@ class OpenAIDriver:
             return None, "Failed to authenticate to server: " + e.body["message"]
         except RateLimitError as e:
             return None, "API rate limit exceeded: " + e.body["message"]
+        except NotFoundError as e:
+            return None, "Not found: " + e.body["message"]
