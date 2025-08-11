@@ -142,7 +142,10 @@ def perform(
     history = []
 
     # FIXME: We assume that we have at least one pattern.
-    # The System sould still work if we use a user suppied system prompt.
+    # The System should still work if we use a user supplied system prompt.
+    if len(patterns) == 0 and (system_input is None or len(system_input) == 0):
+        output(OutputType.Error, "No system input provided!")
+        exit(1)
 
     output(OutputType.Info, "Applying pattern: " + patterns[0])
     system_input, user_input, error = ai.load_pattern(
