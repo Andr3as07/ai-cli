@@ -130,6 +130,36 @@ def list_models():
         print(model)
 
 
+def chat(
+    history: list,
+    is_stream: bool,
+    temperature: float,
+    model_name: str,
+    driver,
+):
+    output(OutputType.Info, "\nStarting Chat session")
+    switch_input()
+    while True:
+        stdin = input("\n> ")
+
+        history.append({"role": "user", "content": stdin})
+        append_to_session(OutputType.User, stdin)
+
+        completion, error = driver.perform_request(
+            history,
+            is_stream,
+            temperature,
+            model_name,
+        )
+
+        if error is not None:
+            output(OutputType.Error, error)
+            exit(1)
+
+        result = print_completion(completion, is_stream)
+        history.append({"role": "assistant", "content": result})
+
+
 def perform(
     patterns: list[str],
     user_input: str,
@@ -224,27 +254,7 @@ def perform(
             history.append({"role": "assistant", "content": result})
 
     if is_chat:
-        output(OutputType.Info, "\nStarting Chat session")
-        switch_input()
-        while True:
-            stdin = input("\n> ")
-
-            history.append({"role": "user", "content": stdin})
-            append_to_session(OutputType.User, stdin)
-
-            completion, error = driver.perform_request(
-                history,
-                is_stream,
-                temperature,
-                model_name,
-            )
-
-            if error is not None:
-                output(OutputType.Error, error)
-                exit(1)
-
-            result = print_completion(completion, is_stream)
-            history.append({"role": "assistant", "content": result})
+        chat(history, is_stream, temperature, model_name, driver)
 
 
 def load_environment():
